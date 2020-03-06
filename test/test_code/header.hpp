@@ -37,7 +37,7 @@ struct Empty {};
 }
 }
 
-/// REFLECT
+/// ~~BIND~~
 struct C
 {
     struct CC {};
@@ -46,7 +46,7 @@ struct C
     all::bb::Empty e;
 };
 
-/// REFLECT
+/// ~~BIND~~
 struct D
 {
     C cc;

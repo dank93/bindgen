@@ -51,12 +51,14 @@ int main(int argc, char* argv[])
     {
         std::cerr << "\t" << kv.first << std::endl;
     }
+    std::cerr << std::endl;
 
     std::cerr << "Visited namespaces:" << std::endl;
     for (const std::string& ns : td.visited_namespaces)
     {
         std::cerr << "\t" << ns << std::endl;
     }
+    std::cerr << std::endl;
 
     // Generate pybind11 code
     code_gen::init_binding_file(source_file_name);
