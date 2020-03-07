@@ -220,6 +220,24 @@ TraversalData find_bind_targets_and_deps(CXCursor c)
     return td;
 }
 
+/**
+ * Given a struct or class declaration cursor, print out the 
+ * names of its public fields.
+ *
+ * Ex:
+ *
+ * struct S
+ * {
+ * public:
+ *      int i;
+ *      float f;
+ *
+ * private:
+ *      char c;
+ * };
+ *
+ * Would return {"i", "f"}
+ */
 std::vector<std::string> get_public_field_names(CXCursor c)
 {
     using std::vector;
@@ -242,9 +260,7 @@ std::vector<std::string> get_public_field_names(CXCursor c)
             if (clang_getCXXAccessSpecifier(c) ==
                     CX_CXXPublic)
             {
-                d.names.push_back(d.scoped_type_name + 
-                        SCOPE_DELIMITER + 
-                        cursor_spelling(c));
+                d.names.push_back(cursor_spelling(c));
             }
 
             return CXVisit_Continue;

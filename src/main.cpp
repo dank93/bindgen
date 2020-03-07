@@ -55,8 +55,8 @@ int main(int argc, char* argv[])
 
     // Generate pybind11 code
     code_gen::init_binding_file(source_file_name);
-    code_gen::print_namespace_bindings(td);
-    code_gen::print_type_bindings(td);
+    auto namespace_tokens = code_gen::print_namespace_bindings(td);
+    code_gen::print_type_bindings(td, namespace_tokens);
     code_gen::end_binding_file();
 
     // Clean up

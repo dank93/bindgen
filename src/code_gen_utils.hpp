@@ -42,6 +42,9 @@ std::string end_of_scope(const std::string& ns)
                     + ast::SCOPE_DELIMITER.length());
 }
 
+/**
+ * Print includes and pybind module macro
+ */
 void init_binding_file(const std::string& fname)
 {
     std::cout << "#include \"" << fname << "\"" << std::endl;
@@ -60,7 +63,8 @@ void init_binding_file(const std::string& fname)
  * generate submodules that reflect the original nested namespace
  * structure
  */
-void print_namespace_bindings(const ast::TraversalData& td)
+std::unordered_map<std::string, std::string>
+print_namespace_bindings(const ast::TraversalData& td)
 {
     using namespace std;
 
@@ -98,37 +102,77 @@ void print_namespace_bindings(const ast::TraversalData& td)
                 expanded[ns_from_global] = ns_token;
 
                 cout << "\tpy::module " << ns_token << " = "
-                          << parent_token << ".def_submodule(\""
-                          << end_of_scope(ns_from_global) 
-                          << "\");" << endl;
+                     << parent_token << ".def_submodule(\""
+                     << end_of_scope(ns_from_global) 
+                     << "\");" << endl;
             }
 
             ns.erase(0, pos + ast::SCOPE_DELIMITER.length());
             ns_from_global += ast::SCOPE_DELIMITER;
         } while (pos != string::npos);
     }
+
+    return expanded;
 }
 
-void print_type_bindings(const ast::TraversalData& td)
+/**
+ * Print binding for single C++ struct or class, including public
+ * member variables
+ */
+void print_struct_or_class_bindings(
+    const std::string& fully_scoped_type_name,
+    const CXCursor& type_decl_cursor,
+    const std::unordered_map<std::string, std::string>& namespace_tokens)
+{
+    using namespace std;
+
+    string type_namespace = ast::parent_scope(fully_scoped_type_name);
+    string bare_type_name = end_of_scope(fully_scoped_type_name);
+    const string& namespace_token = namespace_tokens.at(type_namespace);
+
+    cout << "\tpy::class_<" << fully_scoped_type_name << ">("
+         << namespace_token << ", \"" << bare_type_name
+         << "\")" << endl;
+    cout << "\t\t.def(py::init<>())";
+
+    vector<string> field_names = ast::get_public_field_names(type_decl_cursor); 
+
+    for (size_t i = 0; i < field_names.size(); i++)
+    {
+        if (i == 0) cout << endl;
+
+        const string& field = field_names[i];
+
+        cout << "\t\t.def_readwrite(\"" << field
+             << "\", &" << fully_scoped_type_name << "::"
+             << field << ")";
+
+        if (i != field_names.size() - 1) cout << endl;
+    }
+
+    cout << ";" << endl << endl;
+}
+
+/**
+ * Print pybind code for all types in TraversalData, nested in submodeules
+ * according to source namespace
+ */
+void print_type_bindings(
+    const ast::TraversalData& td,
+    const std::unordered_map<std::string, std::string>& namespace_tokens)
 {
     using namespace std;
 
     cout << endl;
     for (const auto& kv : td.visited_types)
     {
-        const string& type_name = kv.first;
-        const CXCursor& type_cursor = kv.second;
-        vector<string> field_names = 
-            ast::get_public_field_names(type_cursor); 
-
-        cout << type_name << " fields:" << endl;
-        for (const string& field : field_names)
-        {
-            cout << "\t" << field << endl;
-        }
+        print_struct_or_class_bindings(kv.first, kv.second, namespace_tokens);
     }
 }
 
+/**
+ * Terminate generated file
+ */
 void end_binding_file()
 {
     std::cout << "}" << std::endl;
