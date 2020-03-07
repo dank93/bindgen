@@ -81,7 +81,7 @@ void print_namespace_bindings(const std::unordered_set<std::string>& namespaces)
             // and new submodule token.
             if (expanded.find(ns_from_scratch) == expanded.end())
             {
-                std::string parent_ns = ast::namespace_of_type(ns_from_scratch);
+                std::string parent_ns = ast::parent_namespace(ns_from_scratch);
                 std::string parent_token = expanded[parent_ns];
 
                 std::string ns_token = pb_namespace_token(ns_from_scratch);

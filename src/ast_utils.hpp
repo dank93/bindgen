@@ -79,7 +79,7 @@ std::string scoped_type_name(CXCursor cursor, bool start = true)
 /**
  * Extract namespace scope of unqualified type name
  */
-std::string namespace_of_type(std::string type_str)
+std::string parent_namespace(std::string type_str)
 {
     auto pos = type_str.rfind("::");
 
@@ -108,7 +108,7 @@ struct TraversalData
  * Recursion util that iterates over all of a cursor's type's
  * members, building dependcy graph of root type
  */
-void _recurse_members(const CXCursor& c, TraversalData* td)
+void _recurse_fields(const CXCursor& c, TraversalData* td)
 {
     clang_Type_visitFields(clang_getCursorType(c),
         [](CXCursor c, CXClientData client_data) {
@@ -117,7 +117,7 @@ void _recurse_members(const CXCursor& c, TraversalData* td)
             for (size_t i = 0; i < td->depth; ++i) std::cerr << "\t";
 
             std::string type_name = scoped_type_name(c);
-            std::string type_namespace = namespace_of_type(type_name);
+            std::string type_namespace = parent_namespace(type_name);
             bool prev_visited_type = false;
 
             if (type_name == "")
@@ -147,7 +147,7 @@ void _recurse_members(const CXCursor& c, TraversalData* td)
             if (!prev_visited_type)
             {
                 td->depth++;
-                _recurse_members(c, td);
+                _recurse_fields(c, td);
                 td->depth--;
             }
 
@@ -163,17 +163,17 @@ void _recurse_members(const CXCursor& c, TraversalData* td)
  * Recursion util that iterates over all of a cursor's type's
  * members, building dependcy graph of root type
  */
-void recurse_members(const CXCursor& c, TraversalData* td)
+void recurse_fields(const CXCursor& c, TraversalData* td)
 {
     std::cerr << "Recursing " << clang_getCursorSpelling(c) << std::endl;
     td->depth = 1;
 
     std::string type_name = scoped_type_name(c);
-    std::string type_namespace = namespace_of_type(type_name);
+    std::string type_namespace = parent_namespace(type_name);
     td->visited_types[type_name] = c;
     td->visited_namespaces.insert(type_namespace);
 
-    _recurse_members(c, td);
+    _recurse_fields(c, td);
 
     std::cerr << std::endl;
 }
@@ -194,7 +194,7 @@ TraversalData find_bind_targets_and_deps(CXCursor c)
 
             if (ast::bind_requested(c))
             {
-                ast::recurse_members(c, td);
+                ast::recurse_fields(c, td);
             }
 
   	  	  	return CXChildVisit_Recurse;
