@@ -6,7 +6,6 @@
 
 namespace code_gen
 {
-static const std::string SCOPE_DELIMITER = "::";
 static const std::string MODULE_TOKEN = "_module_";
 
 /**
@@ -18,9 +17,9 @@ std::string pb_namespace_token(std::string ns)
     size_t pos = 0;
     std::string token = "";
     do {
-        pos = ns.find(SCOPE_DELIMITER);
+        pos = ns.find(ast::SCOPE_DELIMITER);
         token += ns.substr(0, pos);
-        ns.erase(0, pos + SCOPE_DELIMITER.length());
+        ns.erase(0, pos + ast::SCOPE_DELIMITER.length());
         token += "__";
     } while (pos != std::string::npos);
 
@@ -31,15 +30,16 @@ std::string pb_namespace_token(std::string ns)
  * Get innermost namespace of string representing nested
  * namespaces (e.g. a::b::c -> c)
  */
-std::string end_of_namespace(const std::string& ns)
+std::string end_of_scope(const std::string& ns)
 {
-    if (ns.rfind(SCOPE_DELIMITER) == std::string::npos)
+    if (ns.rfind(ast::SCOPE_DELIMITER) == std::string::npos)
     {
         return ns;
     }
 
     return ns.substr(
-            ns.rfind(SCOPE_DELIMITER) + SCOPE_DELIMITER.length());
+            ns.rfind(ast::SCOPE_DELIMITER) 
+                    + ast::SCOPE_DELIMITER.length());
 }
 
 void init_binding_file(const std::string& fname)
@@ -69,33 +69,55 @@ void print_namespace_bindings(const std::unordered_set<std::string>& namespaces)
 
     for (std::string ns : namespaces)
     {
-        std::string ns_from_scratch = "";
+        std::string ns_from_global = "";
         size_t pos = 0;
         do {
-            pos = ns.find(SCOPE_DELIMITER);
-            ns_from_scratch += ns.substr(0, pos);
+            pos = ns.find(ast::SCOPE_DELIMITER);
+            ns_from_global += ns.substr(0, pos);
     
             // Have not encountered this namespace before.
             // Get its parent, create a new pybind submodule
             // within its parent submodule, and store the namespace
             // and new submodule token.
-            if (expanded.find(ns_from_scratch) == expanded.end())
+            if (expanded.find(ns_from_global) == expanded.end())
             {
-                std::string parent_ns = ast::parent_namespace(ns_from_scratch);
-                std::string parent_token = expanded[parent_ns];
+                std::string parent_scope = ast::parent_scope(ns_from_global);
+                std::string parent_token = expanded[parent_scope];
 
-                std::string ns_token = pb_namespace_token(ns_from_scratch);
-                expanded[ns_from_scratch] = ns_token;
+                std::string ns_token = pb_namespace_token(ns_from_global);
+                expanded[ns_from_global] = ns_token;
 
                 std::cout << "\tpy::module " << ns_token << " = "
                           << parent_token << ".def_submodule(\""
-                          << end_of_namespace(ns_from_scratch) 
+                          << end_of_scope(ns_from_global) 
                           << "\");" << std::endl;
             }
 
-            ns.erase(0, pos + SCOPE_DELIMITER.length());
-            ns_from_scratch += SCOPE_DELIMITER;
+            ns.erase(0, pos + ast::SCOPE_DELIMITER.length());
+            ns_from_global += ast::SCOPE_DELIMITER;
         } while (pos != std::string::npos);
+    }
+}
+
+void print_type_bindings(
+        const std::unordered_map<std::string, CXCursor>& types)
+{
+    using std::vector;
+    using std::string;
+
+    std::cout << std::endl;
+    for (const auto& kv : types)
+    {
+        const string& type_name = kv.first;
+        const CXCursor& type_cursor = kv.second;
+        vector<string> field_names = 
+            ast::get_public_field_names(type_cursor); 
+
+        std::cout << type_name << " fields:" << std::endl;
+        for (const string& field : field_names)
+        {
+            std::cout << "\t" << field << std::endl;
+        }
     }
 }
 

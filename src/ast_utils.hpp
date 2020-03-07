@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 /**
  * Easy CXString printing
@@ -23,6 +24,8 @@ std::ostream& operator<<(std::ostream& stream, const CXString& str)
 
 namespace ast
 {
+static const std::string SCOPE_DELIMITER = "::";
+
 /**
  * Extract comment string associated with cursor
  */
@@ -37,6 +40,23 @@ std::string comment_string(const CXCursor& c)
     }
 
     clang_disposeString(comment_cxstr);
+	return out;
+}
+
+/**
+ * Extract std::string version of cursor name
+ */
+std::string cursor_spelling(const CXCursor& c)
+{
+    CXString name = clang_getCursorSpelling(c);
+    std::string out = "";
+
+    if (const char* c_str = clang_getCString(name))
+    {
+        out = c_str;
+    }
+
+    clang_disposeString(name);
 	return out;
 }
 
@@ -79,7 +99,7 @@ std::string scoped_type_name(CXCursor cursor, bool start = true)
 /**
  * Extract namespace scope of unqualified type name
  */
-std::string parent_namespace(std::string type_str)
+std::string parent_scope(std::string type_str)
 {
     auto pos = type_str.rfind("::");
 
@@ -117,7 +137,7 @@ void _recurse_fields(const CXCursor& c, TraversalData* td)
             for (size_t i = 0; i < td->depth; ++i) std::cerr << "\t";
 
             std::string type_name = scoped_type_name(c);
-            std::string type_namespace = parent_namespace(type_name);
+            std::string type_namespace = parent_scope(type_name);
             bool prev_visited_type = false;
 
             if (type_name == "")
@@ -169,7 +189,7 @@ void recurse_fields(const CXCursor& c, TraversalData* td)
     td->depth = 1;
 
     std::string type_name = scoped_type_name(c);
-    std::string type_namespace = parent_namespace(type_name);
+    std::string type_namespace = parent_scope(type_name);
     td->visited_types[type_name] = c;
     td->visited_namespaces.insert(type_namespace);
 
@@ -205,5 +225,39 @@ TraversalData find_bind_targets_and_deps(CXCursor c)
     td.visited_types.erase("");
 
     return td;
+}
+
+std::vector<std::string> get_public_field_names(CXCursor c)
+{
+    using std::vector;
+    using std::string;
+
+    struct Data
+    {
+        vector<string> names;
+        string scoped_type_name;
+    };
+
+    Data d;
+    d.scoped_type_name = scoped_type_name(c);
+
+    clang_Type_visitFields(clang_getCursorType(c),
+        [](CXCursor c, CXClientData client_data) {        
+
+            Data& d = *(Data*)client_data;
+
+            if (clang_getCXXAccessSpecifier(c) ==
+                    CX_CXXPublic)
+            {
+                d.names.push_back(d.scoped_type_name + 
+                        SCOPE_DELIMITER + 
+                        cursor_spelling(c));
+            }
+
+            return CXVisit_Continue;
+        },
+        &d);
+
+    return d.names;
 }
 }
