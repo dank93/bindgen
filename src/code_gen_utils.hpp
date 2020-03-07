@@ -60,16 +60,26 @@ void init_binding_file(const std::string& fname)
  * generate submodules that reflect the original nested namespace
  * structure
  */
-void print_namespace_bindings(const std::unordered_set<std::string>& namespaces)
+void print_namespace_bindings(const ast::TraversalData& td)
 {
-    std::unordered_map<std::string, std::string> expanded;
+    using namespace std;
+
+    // Get vector of namespaces
+    unordered_set<string> namespaces;
+    for (const auto& kv : td.visited_types)
+    {
+        namespaces.insert(ast::parent_scope(kv.first));
+    }
+    namespaces.erase("");
+
+    unordered_map<string, string> expanded;
 
     // Empty string namespae is module-level token
     expanded[""] = MODULE_TOKEN;
 
-    for (std::string ns : namespaces)
+    for (string ns : namespaces)
     {
-        std::string ns_from_global = "";
+        string ns_from_global = "";
         size_t pos = 0;
         do {
             pos = ns.find(ast::SCOPE_DELIMITER);
@@ -81,42 +91,40 @@ void print_namespace_bindings(const std::unordered_set<std::string>& namespaces)
             // and new submodule token.
             if (expanded.find(ns_from_global) == expanded.end())
             {
-                std::string parent_scope = ast::parent_scope(ns_from_global);
-                std::string parent_token = expanded[parent_scope];
+                string parent_scope = ast::parent_scope(ns_from_global);
+                string parent_token = expanded[parent_scope];
 
-                std::string ns_token = pb_namespace_token(ns_from_global);
+                string ns_token = pb_namespace_token(ns_from_global);
                 expanded[ns_from_global] = ns_token;
 
-                std::cout << "\tpy::module " << ns_token << " = "
+                cout << "\tpy::module " << ns_token << " = "
                           << parent_token << ".def_submodule(\""
                           << end_of_scope(ns_from_global) 
-                          << "\");" << std::endl;
+                          << "\");" << endl;
             }
 
             ns.erase(0, pos + ast::SCOPE_DELIMITER.length());
             ns_from_global += ast::SCOPE_DELIMITER;
-        } while (pos != std::string::npos);
+        } while (pos != string::npos);
     }
 }
 
-void print_type_bindings(
-        const std::unordered_map<std::string, CXCursor>& types)
+void print_type_bindings(const ast::TraversalData& td)
 {
-    using std::vector;
-    using std::string;
+    using namespace std;
 
-    std::cout << std::endl;
-    for (const auto& kv : types)
+    cout << endl;
+    for (const auto& kv : td.visited_types)
     {
         const string& type_name = kv.first;
         const CXCursor& type_cursor = kv.second;
         vector<string> field_names = 
             ast::get_public_field_names(type_cursor); 
 
-        std::cout << type_name << " fields:" << std::endl;
+        cout << type_name << " fields:" << endl;
         for (const string& field : field_names)
         {
-            std::cout << "\t" << field << std::endl;
+            cout << "\t" << field << endl;
         }
     }
 }

@@ -53,17 +53,10 @@ int main(int argc, char* argv[])
     }
     std::cerr << std::endl;
 
-    std::cerr << "Visited namespaces:" << std::endl;
-    for (const std::string& ns : td.visited_namespaces)
-    {
-        std::cerr << "\t" << ns << std::endl;
-    }
-    std::cerr << std::endl;
-
     // Generate pybind11 code
     code_gen::init_binding_file(source_file_name);
-    code_gen::print_namespace_bindings(td.visited_namespaces);
-    code_gen::print_type_bindings(td.visited_types);
+    code_gen::print_namespace_bindings(td);
+    code_gen::print_type_bindings(td);
     code_gen::end_binding_file();
 
     // Clean up

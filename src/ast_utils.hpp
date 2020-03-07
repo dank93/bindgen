@@ -119,9 +119,6 @@ struct TraversalData
 
     // Types that we've already recursed through
     std::unordered_map<std::string, CXCursor> visited_types;
-    
-    // Namespaces we've already recursed through
-    std::unordered_set<std::string> visited_namespaces;
 };
 
 /**
@@ -137,7 +134,6 @@ void _recurse_fields(const CXCursor& c, TraversalData* td)
             for (size_t i = 0; i < td->depth; ++i) std::cerr << "\t";
 
             std::string type_name = scoped_type_name(c);
-            std::string type_namespace = parent_scope(type_name);
             bool prev_visited_type = false;
 
             if (type_name == "")
@@ -172,7 +168,6 @@ void _recurse_fields(const CXCursor& c, TraversalData* td)
             }
 
             td->visited_types[type_name] = c;
-            td->visited_namespaces.insert(type_namespace);
 
             return CXVisit_Continue;
         },
@@ -191,7 +186,6 @@ void recurse_fields(const CXCursor& c, TraversalData* td)
     std::string type_name = scoped_type_name(c);
     std::string type_namespace = parent_scope(type_name);
     td->visited_types[type_name] = c;
-    td->visited_namespaces.insert(type_namespace);
 
     _recurse_fields(c, td);
 
@@ -221,7 +215,6 @@ TraversalData find_bind_targets_and_deps(CXCursor c)
   	  	},
   	  	&td);
 
-    td.visited_namespaces.erase("");
     td.visited_types.erase("");
 
     return td;
