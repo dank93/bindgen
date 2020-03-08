@@ -6,5 +6,5 @@ GIT_DIR=$(git rev-parse --show-toplevel)
     -I/usr/local/opt/llvm/include \
     -L/usr/local/opt/llvm/lib \
     -lclang \
-    -o $GIT_DIR/parser \
+    -o $GIT_DIR/bindgen \
     $GIT_DIR/src/main.cpp
