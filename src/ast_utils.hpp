@@ -112,6 +112,24 @@ std::string parent_scope(std::string type_str)
     return type_str;
 }
 
+/**
+ * Check if cursor type is from C++ standard library
+ */
+bool from_std(const CXCursor& c)
+{
+    std::string scope = parent_scope(scoped_type_name(c));
+    while (scope != "")
+    {
+        if (scope == "std")
+        {
+            return true;
+        }
+        scope = parent_scope(scope);
+    }
+
+    return false;
+}
+
 struct TraversalData
 {
     // Recursion depth
@@ -127,38 +145,45 @@ struct TraversalData
  */
 void _recurse_fields(const CXCursor& c, TraversalData* td)
 {
+    using namespace std;
+
     clang_Type_visitFields(clang_getCursorType(c),
         [](CXCursor c, CXClientData client_data) {
             
             TraversalData* td = (TraversalData*)client_data;
-            for (size_t i = 0; i < td->depth; ++i) std::cerr << "\t";
+            for (size_t i = 0; i < td->depth; ++i) cerr << "\t";
 
-            std::string type_name = scoped_type_name(c);
+            string type_name = scoped_type_name(c);
             bool prev_visited_type = false;
 
             if (type_name == "")
             {
-                std::cerr << "basic_type ";
-                std::cerr << clang_getTypeSpelling(clang_getCursorType(c))
+                cerr << clang_getTypeSpelling(clang_getCursorType(c))
                           << " " << clang_getCursorSpelling(c);
+                cerr << " (basic type)";
             }
             else
             {
-                std::cerr << type_name << " "
+                cerr << type_name << " "
                           << clang_getCursorSpelling(c);
 
+                if (from_std(c))
+                {
+                    cerr << " (skipping std)" << std::endl;
+                    return CXVisit_Continue;
+                }
                 if (td->visited_types.find(type_name) !=
                     td->visited_types.end())
                 {
                     prev_visited_type = true;
-                    std::cerr << " (visited)";
+                    cerr << " (visited)";
                 }
                 else
                 {
-                    std::cerr << " (+)";
+                    cerr << " (+)";
                 }
             }
-            std::cerr << std::endl;
+            cerr << endl;
 
             if (!prev_visited_type)
             {

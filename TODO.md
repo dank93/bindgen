@@ -1,4 +1,3 @@
-- ignore stl
 - sanitize template types
     - replace commas and spaces with underscores
     - add leading underscore
