@@ -27,6 +27,14 @@ namespace ast
 static const std::string SCOPE_DELIMITER = "::";
 
 /**
+ * Check if cursor is public field
+ */
+bool is_public_field(const CXCursor& c)
+{
+    return clang_getCXXAccessSpecifier(c) == CX_CXXPublic;
+}
+
+/**
  * Extract comment string associated with cursor
  */
 std::string comment_string(const CXCursor& c)
@@ -172,8 +180,13 @@ void _recurse_fields(const CXCursor& c, TraversalData* td)
                     cerr << " (skipping std)" << std::endl;
                     return CXVisit_Continue;
                 }
-                if (td->visited_types.find(type_name) !=
-                    td->visited_types.end())
+                else if (!is_public_field(c))
+                {
+                    cerr << " (skipping priv)" << std::endl;
+                    return CXVisit_Continue;
+                }
+                else if (td->visited_types.find(type_name) !=
+                         td->visited_types.end())
                 {
                     prev_visited_type = true;
                     cerr << " (visited)";
@@ -282,8 +295,7 @@ std::vector<std::string> get_public_field_names(CXCursor c)
 
             Data& d = *(Data*)client_data;
 
-            if (clang_getCXXAccessSpecifier(c) ==
-                    CX_CXXPublic)
+            if (is_public_field(c))
             {
                 d.names.push_back(cursor_spelling(c));
             }
