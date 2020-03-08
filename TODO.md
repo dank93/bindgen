@@ -1,9 +1,7 @@
-- sanitize template types
-    - replace commas and spaces with underscores
-    - add leading underscore
 - enum support
 - CXXopt
     - includes, etc
+- tab-complete in ipython?
 - plugins? (kind of defeats purpose...)
 - member functions?
 - c-style arrays?

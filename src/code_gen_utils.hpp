@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
@@ -40,6 +41,37 @@ std::string end_of_scope(const std::string& ns)
     return ns.substr(
             ns.rfind(ast::SCOPE_DELIMITER) 
                     + ast::SCOPE_DELIMITER.length());
+}
+
+/**
+ * Prepare type name for bindings by replacing '<, >' characters
+ * with underscores, and prepend type name with underscore if it is a 
+ * templated type, preventing template instantiations from polluting
+ * module.
+ */
+std::string sanitized_if_template_typename(std::string type_name)
+{
+    auto template_char_pos = [](std::string s) {
+        std::array<size_t, 4> positions{
+            s.find("<"),
+            s.find(","),
+            s.find(" "),
+            s.find(">"),
+        };
+        return *std::min_element(positions.begin(), positions.end());
+    };
+
+    bool is_template = false;
+
+    size_t pos = template_char_pos(type_name);
+    while (pos != std::string::npos)
+    {
+        is_template = true;
+        type_name.replace(pos, 1, "_");      
+        pos = template_char_pos(type_name);
+    }
+
+    return is_template ? "_" + type_name : type_name;
 }
 
 /**
@@ -129,10 +161,11 @@ void print_struct_or_class_bindings(
 
     string type_namespace = ast::parent_scope(fully_scoped_type_name);
     string bare_type_name = end_of_scope(fully_scoped_type_name);
+    string sanitized_type_name = sanitized_if_template_typename(bare_type_name);
     const string& namespace_token = namespace_tokens.at(type_namespace);
 
     cout << "\tpy::class_<" << fully_scoped_type_name << ">("
-         << namespace_token << ", \"" << bare_type_name
+         << namespace_token << ", \"" << sanitized_type_name
          << "\")" << endl;
     cout << "\t\t.def(py::init<>())";
 
