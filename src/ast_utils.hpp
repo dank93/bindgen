@@ -35,6 +35,24 @@ bool is_public_field(const CXCursor& c)
 }
 
 /**
+ * Check if cursor type is struct or class
+ */
+bool is_struct_or_class(const CXCursor& c)
+{
+    CXCursor decl = clang_getTypeDeclaration(clang_getCursorType(c));
+    return decl.kind == CXCursor_StructDecl || decl.kind == CXCursor_ClassDecl;
+}
+
+/**
+ * Check if cursor type is enum
+ */
+bool is_enum(const CXCursor& c)
+{
+    CXCursor decl = clang_getTypeDeclaration(clang_getCursorType(c));
+    return decl.kind == CXCursor_EnumDecl;
+}
+
+/**
  * Extract comment string associated with cursor
  */
 std::string comment_string(const CXCursor& c)
@@ -281,6 +299,8 @@ std::vector<std::string> get_public_field_names(CXCursor c)
     using std::vector;
     using std::string;
 
+    assert(is_struct_or_class(c));
+
     struct Data
     {
         vector<string> names;
@@ -305,5 +325,43 @@ std::vector<std::string> get_public_field_names(CXCursor c)
         &d);
 
     return d.names;
+}
+
+/**
+ * Get enum values for given enum declaration or instantiation.
+ * Ex:
+ *
+ * enum class ExEnum
+ * {
+ *   A,
+ *   B,
+ *   C
+ * };
+ *
+ * would return {"A", "B", "C"}.
+ */
+std::vector<std::string> get_enum_values(CXCursor c)
+{
+    using std::vector;
+    using std::string;
+
+    assert(is_enum(c));
+
+    vector<string> out;
+
+    clang_visitChildren(
+        clang_getTypeDeclaration(clang_getCursorType(c)),
+        [](CXCursor c, CXCursor parent, CXClientData client_data) {
+
+            auto out = (vector<string>*)client_data;
+            CXString val = clang_getCursorSpelling(c);
+            out->push_back(clang_getCString(val));
+            clang_disposeString(val);
+
+            return CXChildVisit_Recurse;
+        },
+        &out);
+
+    return out;
 }
 }

@@ -154,7 +154,7 @@ print_namespace_bindings(const ast::TraversalData& td)
  */
 void print_struct_or_class_bindings(
     const std::string& fully_scoped_type_name,
-    const CXCursor& type_decl_cursor,
+    const CXCursor& cursor,
     const std::unordered_map<std::string, std::string>& namespace_tokens)
 {
     using namespace std;
@@ -169,7 +169,7 @@ void print_struct_or_class_bindings(
          << "\")" << endl;
     cout << "\t\t.def(py::init<>())";
 
-    vector<string> field_names = ast::get_public_field_names(type_decl_cursor); 
+    vector<string> field_names = ast::get_public_field_names(cursor); 
 
     for (size_t i = 0; i < field_names.size(); i++)
     {
@@ -188,6 +188,42 @@ void print_struct_or_class_bindings(
 }
 
 /**
+ * Print generated binding code for enum type
+ */
+void print_enum_bindings(
+    const std::string& fully_scoped_type_name,
+    const CXCursor& cursor,
+    const std::unordered_map<std::string, std::string>& namespace_tokens)
+{
+    using namespace std;
+
+    string type_namespace = ast::parent_scope(fully_scoped_type_name);
+    string bare_type_name = end_of_scope(fully_scoped_type_name);
+    const string& namespace_token = namespace_tokens.at(type_namespace);
+
+    cout << "\tpy::enum_<" << fully_scoped_type_name << ">("
+         << namespace_token << ", \"" << bare_type_name
+         << "\")";
+
+    vector<string> enum_values = ast::get_enum_values(cursor); 
+
+    for (size_t i = 0; i < enum_values.size(); i++)
+    {
+        if (i == 0) cout << endl;
+
+        const string& enum_val = enum_values[i];
+
+        cout << "\t\t.value(\"" << enum_val
+             << "\", " << fully_scoped_type_name << "::"
+             << enum_val << ")";
+
+        if (i != enum_values.size() - 1) cout << endl;
+    }
+
+    cout << ";" << endl << endl;
+}
+
+/**
  * Print pybind code for all types in TraversalData, nested in submodeules
  * according to source namespace
  */
@@ -200,7 +236,15 @@ void print_type_bindings(
     cout << endl;
     for (const auto& kv : td.visited_types)
     {
-        print_struct_or_class_bindings(kv.first, kv.second, namespace_tokens);
+        if (ast::is_struct_or_class(kv.second))
+            print_struct_or_class_bindings(kv.first, kv.second, namespace_tokens);
+        else if (ast::is_enum(kv.second))
+            print_enum_bindings(kv.first, kv.second, namespace_tokens);
+        else
+        {
+            cerr << "Unexpected type encountered: " << kv.first;
+            exit(-1);
+        }
     }
 }
 
