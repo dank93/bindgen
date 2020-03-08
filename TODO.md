@@ -5,6 +5,7 @@
 - warn about unsupported stuff
     - stl
     - c-style arrays
+    - binding not structs / classes
 - docs
 - clean code up
     - format
