@@ -1,9 +1,17 @@
 #pragma once
 
+#include <array>
+#include <string>
 #include <vector>
 
 namespace all
 {
+template<typename T, size_t S>
+struct TemplatedArray
+{
+    std::array<T, S> arr;
+};
+
 namespace aa
 {
 struct A
@@ -52,7 +60,10 @@ struct C
 struct D
 {
     C cc;
-    std::vector<int> int_vec;
+    std::string s;
+    std::array<int, 10> int_array;
+    std::vector<double> double_vec;
+    all::TemplatedArray<char, 3> char_temp;
 
     int d() { return priv_d; }
 
