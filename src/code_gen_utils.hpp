@@ -50,6 +50,7 @@ void init_binding_file(const std::string& fname)
     std::cout << "#include \"" << fname << "\"" << std::endl;
     std::cout << std::endl;
     std::cout << "#include <pybind11/pybind11.h>" << std::endl;
+    std::cout << "#include <pybind11/stl.h>" << std::endl;
     std::cout << std::endl;
     std::cout << "namespace py = pybind11;" << std::endl;
     std::cout << std::endl;

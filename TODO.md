@@ -1,9 +1,10 @@
-- add stl pybind header
 - ignore stl
 - sanitize template types
     - replace commas and spaces with underscores
     - add leading underscore
 - enum support
+- CXXopt
+    - includes, etc
 - plugins? (kind of defeats purpose...)
 - member functions?
 - c-style arrays?
