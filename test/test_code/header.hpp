@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 namespace all
 {
 namespace aa
@@ -50,6 +52,7 @@ struct C
 struct D
 {
     C cc;
+    std::vector<int> int_vec;
 
     int d() { return priv_d; }
 
