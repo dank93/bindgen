@@ -77,15 +77,24 @@ std::string sanitized_if_template_typename(std::string type_name)
 /**
  * Print includes and pybind module macro
  */
-void init_binding_file(const std::string& fname)
+void init_binding_file(const std::vector<std::string>& project_headers,
+                       const std::vector<std::string>& system_headers)
 {
-    std::cout << "#include \"" << fname << "\"" << std::endl;
+    for (const auto& ph : project_headers)
+        std::cout << "#include \"" << ph << "\"" << std::endl;
     std::cout << std::endl;
+
+    for (const auto& sh : system_headers)
+        std::cout << "#include <" << sh << ">" << std::endl;
+    std::cout << std::endl;
+
     std::cout << "#include <pybind11/pybind11.h>" << std::endl;
     std::cout << "#include <pybind11/stl.h>" << std::endl;
     std::cout << std::endl;
+
     std::cout << "namespace py = pybind11;" << std::endl;
     std::cout << std::endl;
+
     std::cout << "PYBIND11_MODULE(generated_pybind, "
               << MODULE_TOKEN << ")" << std::endl;
     std::cout << "{" << std::endl;

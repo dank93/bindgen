@@ -1,6 +1,4 @@
 ## For sure
-- CXXopt
-    - includes, etc
 - fail if file cannot be parsed completely
 - warn about unsupported stuff
     - stl
@@ -9,7 +7,7 @@
 - docs
 - clean code up
     - format
-    - hpp / cpp
+    - break out lib utils into lib
 
 ## Maybe
 - flesh out tests?
