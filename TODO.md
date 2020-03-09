@@ -7,7 +7,9 @@
 - docs
 - clean code up
     - format
-    - break out lib utils into lib
+    - break out clang utils into lib
+        - CXCursor wrapper with nice util funcs
+        - Type dependency aggregator class
 
 ## Maybe
 - flesh out tests?
