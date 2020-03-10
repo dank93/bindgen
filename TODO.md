@@ -1,4 +1,5 @@
 ## For sure
+- special-case c-arrays
 - fail if file cannot be parsed completely
 - warn about unsupported stuff
     - stl
@@ -16,5 +17,4 @@
 - tab-complete in ipython?
 - plugins? (kind of defeats purpose...)
 - member functions?
-- c-style arrays?
 - make types opaque?

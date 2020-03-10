@@ -64,6 +64,7 @@ struct D
     std::array<int, 10> int_array;
     std::vector<double> double_vec;
     all::TemplatedArray<char, 3> char_temp;
+    C c_arr[4];
 
     int d() { return priv_d; }
 

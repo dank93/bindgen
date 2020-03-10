@@ -102,23 +102,11 @@ bool bind_requested(const CXCursor& c)
  */
 std::string scoped_type_name(CXCursor cursor, bool start = true)
 {
-    if (start)
-    {
-        cursor = clang_getTypeDeclaration(clang_getCursorType(cursor));
-    }
-
-    if (clang_Cursor_isNull(cursor) || clang_isTranslationUnit(cursor.kind))
-    {
-        return "";
-    }
-
     std::string s = "";
-
     CXString str = clang_getTypeSpelling(clang_getCursorType(
                     clang_getTypeDeclaration(clang_getCursorType(cursor))));
     s += clang_getCString(str);
     clang_disposeString(str);
-
     return s;
 }
 
