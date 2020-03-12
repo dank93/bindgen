@@ -9,7 +9,8 @@ namespace all
 template<typename T, size_t S>
 struct TemplatedArray
 {
-    std::array<T, S> arr;
+    std::array<T, S> std_arr;
+    T c_arr[S];
 };
 
 namespace aa

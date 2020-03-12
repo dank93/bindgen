@@ -43,6 +43,18 @@ bool is_struct_or_class(const CXCursor& c)
     return decl.kind == CXCursor_StructDecl || decl.kind == CXCursor_ClassDecl;
 }
 
+bool type_kind_is_array(const CXCursor& c)
+{
+    CXTypeKind tk = clang_getCursorType(c).kind;
+
+    bool arr = tk == CXType_ConstantArray;
+    arr |= tk == CXType_IncompleteArray;
+    arr |= tk == CXType_VariableArray;
+    arr |= tk == CXType_DependentSizedArray;
+
+    return arr;
+}
+
 /**
  * Check if cursor type is enum
  */
@@ -106,6 +118,24 @@ std::string scoped_type_name(CXCursor cursor, bool start = true)
     CXString str = clang_getTypeSpelling(clang_getCursorType(
                     clang_getTypeDeclaration(clang_getCursorType(cursor))));
     s += clang_getCString(str);
+    clang_disposeString(str);
+    return s;
+}
+
+/**
+ * Extract string representeing kind of type (array, etc)
+ */
+std::string type_kind_spelling(const CXCursor& c)
+{
+    CXString str = 
+        clang_getTypeKindSpelling(clang_getCursorType(c).kind);
+
+    std::string s = "";
+    if (const char* c_str = clang_getCString(str))
+    {
+        s = c_str;
+    }
+
     clang_disposeString(str);
     return s;
 }
@@ -202,6 +232,10 @@ void _recurse_fields(const CXCursor& c, TraversalData* td)
                     cerr << " (+)";
                 }
             }
+
+            if (type_kind_is_array(c))
+                cerr << " (c array)";
+            
             cerr << endl;
 
             if (!prev_visited_type)
