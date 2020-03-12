@@ -9,5 +9,6 @@ c++ -Wall \
     -std=c++17 \
     -fPIC \
     `python3 -m pybind11 --includes` \
+    -I$GIT_DIR/test/test_code \
     -o $GIT_DIR/test/BUILD/pybind_reference_pkg`python3-config --extension-suffix` \
     $GIT_DIR/test/reference/pybind_reference.cpp
